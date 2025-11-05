@@ -19,46 +19,53 @@ class Fanuc30iDriver(FocasDriverBase):
     port = 0
     timeout = 0
 
-    def connect(self, ip, port, timeout=10):
-        func = self.dll.cnc_allclibhndl3
-        func.restype = c_short
-        handle = c_ushort(0)
-        result = func(ip, port, timeout, byref(handle))
-        FocasExceptionRaiser(result, context=self)
-        self.ip = ip
-        self.port = port
-        self.timeout = timeout
-        return  handle
     # def connect(self, ip, port, timeout=10):
-    #     try:
-    #         func = self.dll.cnc_allclibhndl3
+    #     func = self.dll.cnc_allclibhndl3
+    #     func.restype = c_short
+    #     handle = c_ushort(0)
+    #     result = func(ip, port, timeout, byref(handle))
+    #     FocasExceptionRaiser(result, context=self)
+    #     self.ip = ip
+    #     self.port = port
+    #     self.timeout = timeout
+    #     return  handle
+    def connect(self, ip, port, timeout=10):
+        try:
+            self.dll.cnc_startupprocess.restype = c_short
+            self.dll.cnc_startupprocess.argtypes = [c_short, c_char_p]
+            log_file = b"focas.log"
+            init_ret = self.dll.cnc_startupprocess(3, log_file)
+            logging.info(f"FOCAS initialization result: {init_ret}")  # 0 = success
+            if init_ret != 0:
+                logging.error(f"FOCAS init failed with code: {init_ret}")
+            func = self.dll.cnc_allclibhndl3
 
-    #         func.argtypes = [
-    #             c_char_p,           # IP address (string)
-    #             c_ushort,           # Port number
-    #             c_long,             # Timeout
-    #             ctypes.POINTER(c_ushort)  # Handle pointer
-    #         ]
-    #         func.restype = c_short
+            func.argtypes = [
+                c_char_p,           # IP address (string)
+                c_ushort,           # Port number
+                c_long,             # Timeout
+                ctypes.POINTER(c_ushort)  # Handle pointer
+            ]
+            func.restype = c_short
             
-    #         ip_bytes = ip.encode('utf-8')
-    #         handle = c_ushort(0)
+            ip_bytes = ip.encode('utf-8')
+            handle = c_ushort(0)
             
-    #         # logging.info(f"Connecting to {ip}:{port} with timeout {timeout}")
+            # logging.info(f"Connecting to {ip}:{port} with timeout {timeout}")
             
-    #         result = func(ip_bytes, port, timeout, byref(handle))
-    #         logging.info(f"Connection result: {result}, Handle: {handle}")
+            result = func(ip_bytes, port, timeout, byref(handle))
+            logging.info(f"Connection result: {result}, Handle: {handle.value}")
             
-    #         FocasExceptionRaiser(result, context=self)
+            FocasExceptionRaiser(result, context=self)
             
-    #         self.ip = ip
-    #         self.port = port
-    #         self.timeout = timeout
-    #         return handle.value
+            self.ip = ip
+            self.port = port
+            self.timeout = timeout
+            return handle.value
             
-        # except Exception as e:
-        #     logging.error(f"Connection failed: {e}")
-        #     raise
+        except Exception as e:
+            logging.error(f"Connection failed: {e}")
+            raise
 
     def disconnect(self, handle):
         self.dll.cnc_freelibhndl(handle)

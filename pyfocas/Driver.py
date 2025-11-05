@@ -14,11 +14,6 @@ class FocasDriverBase(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, filename, extradlls=[], timeout=10):
-        log_dir = "/tmp/focas_logs"
-        os.makedirs(log_dir, exist_ok=True)
-        log_file = os.path.join(log_dir, "focas2.log")
-        os.environ["FOCAS2_LOGFILE"] = log_file
-        
         self.timeout = timeout
         self.extradlls = []
         for extradll in extradlls:
