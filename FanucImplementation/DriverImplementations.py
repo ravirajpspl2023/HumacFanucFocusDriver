@@ -222,30 +222,12 @@ class Fanuc30iDriver(FocasDriverBase):
         """
         data = {}
 
-        # Step 1: Get current tool number (T code)
-        modal = ModalData()
-        result = self.dll.cnc_modal(handle, 108, 1, byref(modal))
-        FocasExceptionRaiser(result, context=self)
-        current_tool = modal.modal.aux.aux_data
-        if current_tool <= 0:
-            data["currentTool"] = None
-            return data
-
-        data["currentTool"] = current_tool
 
         odb = ODBTG()
         length = ctypes.sizeof(ODBTG)
-
-        result = self.dll.cnc_rdtoolgrp(
-        handle,
-        0,              # 0 = currently active group
-        length,
-        byref(odb)
-        )
-        if result != 0:
-            logging.warning(f"cnc_rdtoolgrp failed for tool {current_tool}, code: {result}")
-            data["toolGroup"] = None
-            return data
+        
+        result = self.dll.cnc_rdtoolgrp( handle,0,length,byref(odb))
+        FocasExceptionRaiser(result, context=self)
         logging.info(f"Group: {odb.grp_num}")
         logging.info(f"Max Life: {odb.life}, Used: {odb.count}")
         logging.info(f"Tools in group: {odb.ntool}")
@@ -253,7 +235,6 @@ class Fanuc30iDriver(FocasDriverBase):
         for i in range(odb.ntool):
             t = odb.data[i]
             logging.info(f"  [{t.tuse_num}] T{t.tool_num} | L:{t.length_num} R:{t.radius_num} Info:{t.tinfo}")
-
         # group_num = group_info.group
         # if group_num <= 0:
         #     data["toolGroup"] = None
