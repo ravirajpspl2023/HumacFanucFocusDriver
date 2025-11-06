@@ -3,6 +3,7 @@ from ctypes import *
 from pyfocas.Machine import Machine
 from FanucImplementation.DriverImplementations import Fanuc30iDriver
 from pyfocas import Exceptions
+import time
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -53,8 +54,10 @@ class AdvanceDriver:
          logging.info("Creating Machine instance")
          try:
             self.machine1 = Machine(driver=driver30i, ip="192.168.0.3", name="316")
-            data = self.machine1.createDatum()
-            logging.info(f"Machine connected successfully: {data}")
+            for i in range(10):
+                data = self.machine1.createDatum()
+                logging.info(f"Machine connected successfully: {data}")
+                time.sleep(0.5)
          except Exceptions.FocasConnectionException as e:
             logging.error(f"Failed to create Machine: {e}")
     
