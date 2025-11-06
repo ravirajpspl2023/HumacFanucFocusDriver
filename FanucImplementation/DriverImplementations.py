@@ -233,38 +233,51 @@ class Fanuc30iDriver(FocasDriverBase):
 
         data["currentTool"] = current_tool
 
-        # Step 2: Find which tool life group this tool belongs to
-        group_info = ToolGroupInfo()
-        result = self.dll.cnc_rdtoolgrp(handle, current_tool, byref(group_info))
+        odb = ODBTG()
+        length = ctypes.sizeof(ODBTG)
+
+        result = self.dll.cnc_rdtoolgrp(
+        handle,
+        0,              # 0 = currently active group
+        length,
+        byref(odb)
+        )
         if result != 0:
             logging.warning(f"cnc_rdtoolgrp failed for tool {current_tool}, code: {result}")
             data["toolGroup"] = None
             return data
+        logging.info(f"Group: {odb.grp_num}")
+        logging.info(f"Max Life: {odb.life}, Used: {odb.count}")
+        logging.info(f"Tools in group: {odb.ntool}")
+        
+        for i in range(odb.ntool):
+            t = odb.data[i]
+            logging.info(f"  [{t.tuse_num}] T{t.tool_num} | L:{t.length_num} R:{t.radius_num} Info:{t.tinfo}")
 
-        group_num = group_info.group
-        if group_num <= 0:
-            data["toolGroup"] = None
-            return data
+        # group_num = group_info.group
+        # if group_num <= 0:
+        #     data["toolGroup"] = None
+        #     return data
 
-        data["toolGroup"] = group_num
+        # data["toolGroup"] = group_num
 
-        # Step 3: Read life data for this group
-        tool_life = ToolLifeData()
-        tool_num_out = c_short()
+        # # Step 3: Read life data for this group
+        # tool_life = ToolLifeData()
+        # tool_num_out = c_short()
 
-        result = self.dll.cnc_rdtoollife(handle, group_num, byref(tool_num_out), byref(tool_life))
-        FocasExceptionRaiser(result, context=self)
+        # result = self.dll.cnc_rdtoollife(handle, group_num, byref(tool_num_out), byref(tool_life))
+        # FocasExceptionRaiser(result, context=self)
 
-        # Extract life info
-        used = tool_life.use_life
-        max_life = tool_life.max_life
-        life_unit = tool_life.life_unit  # 0: minutes, 1: times (cycles)
+        # # Extract life info
+        # used = tool_life.use_life
+        # max_life = tool_life.max_life
+        # life_unit = tool_life.life_unit  # 0: minutes, 1: times (cycles)
 
-        data["toolLifeUsed"] = used
-        data["toolLifeMax"] = max_life
-        data["toolLifeRemaining"] = max_life - used
-        data["toolLifeUnit"] = "cycles" if life_unit == 1 else "minutes"
-        data["toolLifePercentUsed"] = (used / max_life * 100) if max_life > 0 else 0
+        # data["toolLifeUsed"] = used
+        # data["toolLifeMax"] = max_life
+        # data["toolLifeRemaining"] = max_life - used
+        # data["toolLifeUnit"] = "cycles" if life_unit == 1 else "minutes"
+        # data["toolLifePercentUsed"] = (used / max_life * 100) if max_life > 0 else 0
 
         return data
 

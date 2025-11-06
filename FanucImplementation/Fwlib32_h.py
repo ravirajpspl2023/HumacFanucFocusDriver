@@ -21,6 +21,8 @@ import ctypes
 """Constants"""
 
 MAX_AXIS = 32
+
+MAX_TOOLS_IN_GROUP = 32
 """int: The maximum number of axes a control will return"""
 
 ALL_AXES = -1
@@ -445,10 +447,31 @@ class ToolGroupInfo(ctypes.Structure):
         ("dummy", ctypes.c_short),
     ]
 
-class ToolLifeData(ctypes.Structure):
+class TGToolData(ctypes.Structure):
     _fields_ = [
-        ("use_life", ctypes.c_long),
-        ("max_life", ctypes.c_long),
-        ("life_unit", ctypes.c_short),  # 0: minute, 1: times
-        ("dummy", ctypes.c_short),
+        ("tuse_num",   ctypes.c_long),  # Tool use-order number
+        ("tool_num",   ctypes.c_long),  # Tool number (T-code)
+        ("length_num", ctypes.c_long),  # Tool length compensation no.
+        ("radius_num", ctypes.c_long),  # Cutter radius compensation no.
+        ("tinfo",      ctypes.c_long),  # Tool information
     ]
+
+class ODBTG(ctypes.Structure):
+    _fields_ = [
+        ("grp_num", ctypes.c_short),            # Tool group number
+        ("dummy",   ctypes.c_short * 2),        # Reserved (not used)
+        ("ntool",   ctypes.c_long),             # Number of tools in group
+        ("life",    ctypes.c_long),             # Max tool life (unit: cycles or minutes)
+        ("count",   ctypes.c_long),             # Current life counter
+        ("data",    TGToolData * MAX_TOOLS_IN_GROUP),  # Array of tools
+    ]
+
+ToolLifeData = ODBTG
+
+# class ToolLifeData(ctypes.Structure):
+#     _fields_ = [
+#         ("use_life", ctypes.c_long),
+#         ("max_life", ctypes.c_long),
+#         ("life_unit", ctypes.c_short),  # 0: minute, 1: times
+#         ("dummy", ctypes.c_short),
+#     ]
