@@ -80,6 +80,7 @@ class Fanuc30iDriver(FocasDriverBase):
         self.addPollMethod(self.getServoAndAxisLoads)
         self.addPollMethod(self.getAlarmStatus)
         self.addPollMethod(self.getCurrentBlock)
+        self.addPollMethod(self.getToolLifeData)
 
     def getProgramName(self, handle):
         func = self.dll.cnc_exeprgname
@@ -213,7 +214,59 @@ class Fanuc30iDriver(FocasDriverBase):
             gBlockString = blockstring.value
 
         return data
+    
+    def getToolLifeData(self, handle):
+        """
+        Reads tool life data for the currently active tool.
+        Returns tool number, group, used life, max life, and remaining.
+        """
+        data = {}
 
+        # Step 1: Get current tool number (T code)
+        modal = ModalData()
+        result = self.dll.cnc_modal(handle, 108, 1, byref(modal))
+        FocasExceptionRaiser(result, context=self)
+        current_tool = modal.modal.aux.aux_data
+        if current_tool <= 0:
+            data["currentTool"] = None
+            return data
+
+        data["currentTool"] = current_tool
+
+        # Step 2: Find which tool life group this tool belongs to
+        group_info = ToolGroupInfo()
+        result = self.dll.cnc_rdtoolgrp(handle, current_tool, byref(group_info))
+        if result != 0:
+            logging.warning(f"cnc_rdtoolgrp failed for tool {current_tool}, code: {result}")
+            data["toolGroup"] = None
+            return data
+
+        group_num = group_info.group
+        if group_num <= 0:
+            data["toolGroup"] = None
+            return data
+
+        data["toolGroup"] = group_num
+
+        # Step 3: Read life data for this group
+        tool_life = ToolLifeData()
+        tool_num_out = c_short()
+
+        result = self.dll.cnc_rdtoollife(handle, group_num, byref(tool_num_out), byref(tool_life))
+        FocasExceptionRaiser(result, context=self)
+
+        # Extract life info
+        used = tool_life.use_life
+        max_life = tool_life.max_life
+        life_unit = tool_life.life_unit  # 0: minutes, 1: times (cycles)
+
+        data["toolLifeUsed"] = used
+        data["toolLifeMax"] = max_life
+        data["toolLifeRemaining"] = max_life - used
+        data["toolLifeUnit"] = "cycles" if life_unit == 1 else "minutes"
+        data["toolLifePercentUsed"] = (used / max_life * 100) if max_life > 0 else 0
+
+        return data
 
 def alarmStringBuilder(alarm_data):
     alarms = []

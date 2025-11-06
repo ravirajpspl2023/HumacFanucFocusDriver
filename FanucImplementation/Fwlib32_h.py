@@ -438,3 +438,17 @@ class ProgramData(ctypes.Structure):
 
 
 ODBPRO = ProgramData
+
+class ToolGroupInfo(ctypes.Structure):
+    _fields_ = [
+        ("group", ctypes.c_short),
+        ("dummy", ctypes.c_short),
+    ]
+
+class ToolLifeData(ctypes.Structure):
+    _fields_ = [
+        ("use_life", ctypes.c_long),
+        ("max_life", ctypes.c_long),
+        ("life_unit", ctypes.c_short),  # 0: minute, 1: times
+        ("dummy", ctypes.c_short),
+    ]
