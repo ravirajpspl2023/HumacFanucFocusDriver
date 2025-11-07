@@ -5,8 +5,8 @@ from FanucImplementation.DriverImplementations import Fanuc30iDriver
 from pyfocas import Exceptions
 import time
 import logging
-
-logging.basicConfig(level=logging.INFO)
+import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class AdvanceDriver:
     def __init__(self,lib_path):

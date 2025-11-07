@@ -6,8 +6,7 @@ from pyfocas.Machine import Machine
 from FanucImplementation.DriverImplementations import Fanuc30iDriver
 from pyfocas import Exceptions
 
-
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def main():
     logging.info("Hello, World!")

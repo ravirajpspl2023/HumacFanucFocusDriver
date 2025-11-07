@@ -6,7 +6,7 @@ from pyfocas.Exceptions import FocasExceptionRaiser
 from .Fwlib32_h import *
 
 import logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 AUTO_LABELS = ["MDI", "AUTO", "AUTO", "EDIT", "AUTO", "MANUAL", "MANUAL"]
 RUN_LABELS = ["STOPPED", "READY (WAITING)", "FEED HOLD", "ACTIVE", "ACTIVE"]
@@ -194,6 +194,7 @@ class Fanuc30iDriver(FocasDriverBase):
         result = getAlarmStatusFunc(handle, byref(alarm_data))
         FocasExceptionRaiser(result, context=self)
         alarm_data = alarm_data.data
+        logging.info(f'this is alarm code : {alarm_data}')
         data = {}
         data["alarm"] = alarmStringBuilder(alarm_data=alarm_data)
         return data
@@ -232,6 +233,9 @@ class Fanuc30iDriver(FocasDriverBase):
         logging.info(f"Group: {odb.grp_num}")
         logging.info(f"Max Life: {odb.life}, Used: {odb.count}")
         logging.info(f"Tools in group: {odb.ntool}")
+        if odb.life == odb.count :
+            logging.info("ToolLife is Over")
+            logging.info(f'{self.getAlarmStatus()}')
         
         for i in range(odb.ntool):
             t = odb.data[i]
