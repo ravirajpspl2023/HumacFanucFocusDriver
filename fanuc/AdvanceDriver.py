@@ -54,7 +54,7 @@ class AdvanceDriver:
          logging.info("Creating Machine instance")
          try:
             self.machine1 = Machine(driver=driver30i, ip="192.168.0.2", name="316")
-            for i in range(10):
+            while True:
                 data = self.machine1.createDatum()
                 logging.info(f"Machine connected successfully: {data}")
                 time.sleep(0.5)

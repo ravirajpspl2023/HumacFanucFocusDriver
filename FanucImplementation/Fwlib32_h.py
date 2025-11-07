@@ -441,13 +441,9 @@ class ProgramData(ctypes.Structure):
 
 ODBPRO = ProgramData
 
-class ToolGroupInfo(ctypes.Structure):
-    _fields_ = [
-        ("group", ctypes.c_short),
-        ("dummy", ctypes.c_short),
-    ]
 
 class TGToolData(ctypes.Structure):
+    _pack_ = 4
     _fields_ = [
         ("tuse_num",   ctypes.c_long),  # Tool use-order number
         ("tool_num",   ctypes.c_long),  # Tool number (T-code)
@@ -457,6 +453,7 @@ class TGToolData(ctypes.Structure):
     ]
 
 class ODBTG(ctypes.Structure):
+    _pack_ = 4
     _fields_ = [
         ("grp_num", ctypes.c_short),            # Tool group number
         ("dummy",   ctypes.c_short * 2),        # Reserved (not used)

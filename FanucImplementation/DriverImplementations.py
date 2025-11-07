@@ -228,6 +228,7 @@ class Fanuc30iDriver(FocasDriverBase):
         
         result = self.dll.cnc_rdtoolgrp( handle,0,length,byref(odb))
         FocasExceptionRaiser(result, context=self)
+        # if odb.grp_num == 13:
         logging.info(f"Group: {odb.grp_num}")
         logging.info(f"Max Life: {odb.life}, Used: {odb.count}")
         logging.info(f"Tools in group: {odb.ntool}")
