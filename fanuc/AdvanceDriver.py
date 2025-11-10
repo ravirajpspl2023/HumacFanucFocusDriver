@@ -15,7 +15,7 @@ class AdvanceDriver:
         self.machine1= None
         self.connected = False
         self.running = True
-        self.broker = "35.238.197.143"
+        self.broker = "localhost"
         self.port = 1883
         self.telemetry_topic = "pspl-iot/telemetry_cnc"
         self.previous_tool_group = None

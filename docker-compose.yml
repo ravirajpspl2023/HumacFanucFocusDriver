@@ -8,10 +8,15 @@ services:
     container_name: Humac_fanuc_driver
     image: humac_fanuc_image
     privileged: true
-
+    restart: always
     network_mode: host
     volumes:
       - ./lib:/humac/lib
       - ./fanuc:/humac/fanuc
       - ./pyfocas:/humac/pyfocas
       - ./FanucImplementation:/humac/FanucImplementation
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
