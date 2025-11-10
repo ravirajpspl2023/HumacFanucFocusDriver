@@ -223,7 +223,7 @@ class Fanuc30iDriver(FocasDriverBase):
         """
         data = {"observation": {
                 "time": time_ns() // 1_000_000,
-                 "machine": "ed4200002",
+                 "machine": "ed4200001",
                  "name": "tool",
                 },
                 "state": {"data": {}}
