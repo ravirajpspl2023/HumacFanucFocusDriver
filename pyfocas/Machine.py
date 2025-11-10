@@ -38,6 +38,14 @@ class Machine(object):
             except FocasConnectionException:
                 logging.info("Reconnecting to machine: %s at %s"
                              % (self.name, self.ip))
+    def get_tool_info(self,):
+        try:
+            if self.handle:
+                data = self.driver.getToolLifeData(self.handle)
+                return data
+        except FocasConnectionException as e:
+            self.connecte()
+            
     def disconnect(self):
         if self.handle is not None:
             self.driver.disconnect(self.handle)

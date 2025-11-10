@@ -4,7 +4,7 @@ import ctypes
 from pyfocas.Driver import FocasDriverBase
 from pyfocas.Exceptions import FocasExceptionRaiser
 from .Fwlib32_h import *
-
+from time import time_ns
 import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -221,9 +221,13 @@ class Fanuc30iDriver(FocasDriverBase):
         Reads tool life data for the currently active tool.
         Returns tool number, group, used life, max life, and remaining.
         """
-        data = {}
-
-
+        data = {"observation": {
+                "time": time_ns() // 1_000_000,
+                 "machine": "ed4200002",
+                 "name": "tool",
+                },
+                "state": {"data": {}}
+              }
         odb = ODBTG()
         length = ctypes.sizeof(ODBTG)
         
@@ -231,40 +235,21 @@ class Fanuc30iDriver(FocasDriverBase):
         FocasExceptionRaiser(result, context=self)
         # if odb.grp_num == 13:
         logging.info(f"Group: {odb.grp_num}")
-        logging.info(f"Max Life: {odb.life}, Used: {odb.count}")
-        logging.info(f"Tools in group: {odb.ntool}")
-        if odb.life == odb.count :
-            logging.info("ToolLife is Over")
-            logging.info(f'{self.getAlarmStatus()}')
+        data["state"]['data']["group"] = odb.grp_num
+        data["state"]['data']["max_life"] = odb.life
+        data["state"]['data']["tool_life_count"] = odb.count
+        data["state"]['data']["tool_in_group"] = odb.ntool
+
+        # logging.info(f"Max Life: {odb.life}, Used: {odb.count}")
+        # logging.info(f"Tools in group: {odb.ntool}")
+        # if odb.life == odb.count :
+        #     logging.info("ToolLife is Over")
+            # logging.info(f'{self.getAlarmStatus()}')
         
         for i in range(odb.ntool):
             t = odb.data[i]
-            logging.info(f"  [{t.tuse_num}] T{t.tool_num} | L:{t.length_num} R:{t.radius_num} Info:{t.tinfo}")
-        # group_num = group_info.group
-        # if group_num <= 0:
-        #     data["toolGroup"] = None
-        #     return data
-
-        # data["toolGroup"] = group_num
-
-        # # Step 3: Read life data for this group
-        # tool_life = ToolLifeData()
-        # tool_num_out = c_short()
-
-        # result = self.dll.cnc_rdtoollife(handle, group_num, byref(tool_num_out), byref(tool_life))
-        # FocasExceptionRaiser(result, context=self)
-
-        # # Extract life info
-        # used = tool_life.use_life
-        # max_life = tool_life.max_life
-        # life_unit = tool_life.life_unit  # 0: minutes, 1: times (cycles)
-
-        # data["toolLifeUsed"] = used
-        # data["toolLifeMax"] = max_life
-        # data["toolLifeRemaining"] = max_life - used
-        # data["toolLifeUnit"] = "cycles" if life_unit == 1 else "minutes"
-        # data["toolLifePercentUsed"] = (used / max_life * 100) if max_life > 0 else 0
-
+            data["state"]['data']["tool"] = t.tool_num
+            # logging.info(f"  [{t.tuse_num}] T{t.tool_num} | L:{t.length_num} R:{t.radius_num} Info:{t.tinfo}")
         return data
 
 def alarmStringBuilder(alarm_data):

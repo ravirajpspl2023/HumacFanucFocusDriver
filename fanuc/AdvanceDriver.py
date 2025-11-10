@@ -55,7 +55,7 @@ class AdvanceDriver:
          try:
             self.machine1 = Machine(driver=driver30i, ip="192.168.0.2", name="316")
             while True:
-                data = self.machine1.createDatum()
+                data = self.machine1.get_tool_info()
                 logging.info(f"Machine connected successfully: {data}")
                 time.sleep(0.5)
          except Exceptions.FocasConnectionException as e:
