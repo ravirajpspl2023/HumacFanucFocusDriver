@@ -14,7 +14,17 @@ AUTO_LABELS = ["MDI", "AUTO", "AUTO", "EDIT", "AUTO", "MANUAL", "MANUAL"]
 RUN_LABELS = ["STOPPED", "READY (WAITING)", "FEED HOLD", "ACTIVE", "ACTIVE"]
 
 gBlockString = ""
+_worker_handle   = None
+_worker_instance = None
 
+def _pool_initializer(handle_val: int, driver_instance):
+    global _worker_handle, _worker_instance
+    _worker_handle   = handle_val
+    _worker_instance = driver_instance
+
+def _worker_run_method(method_name: str):
+    method = getattr(_worker_instance, method_name)
+    return method(_worker_handle)
 
 class Fanuc30iDriver(FocasDriverBase):
     ip = ""
@@ -240,17 +250,24 @@ class Fanuc30iDriver(FocasDriverBase):
         return data
     
     def _run_function(self, func):
-        """Helper function jo pickle ho sakta hai"""
+
         return func()
     
-    def process_poll(self,handle):
-        if handle is not None and self._poll_methods != []:
-            method_names = [m.__name__ for m in self._poll_methods]
-            partial_funcs = [partial(method, handle) for method in self._poll_methods]
-            with mp.Pool(processes=len(self._poll_methods)) as pool:
-                results = pool.map(self._run_function, partial_funcs)
-                
-            return dict(zip(method_names, results))
+    def process_poll(self, handle: int) -> Dict[str, Any]:
+        if handle is None or not self._poll_methods:
+            return {}
+
+        method_names = [m.__name__ for m in self._poll_methods]
+
+        ctx = mp.get_context('spawn')
+        with ctx.Pool(
+                processes=len(self._poll_methods),
+                initializer=_pool_initializer,
+                initargs=(handle, self)
+        ) as pool:
+            results = pool.map(_worker_run_method, method_names)
+
+        return dict(zip(method_names, results))
 
 def alarmStringBuilder(alarm_data):
     alarms = []
