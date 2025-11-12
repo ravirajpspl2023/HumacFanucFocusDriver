@@ -67,7 +67,7 @@ class AdvanceDriver:
          logging.info("Creating Fanuc30iDriver instance")      
          driver30i = Fanuc30iDriver(self.lib_path,extradlls=["./lib/fwlibe64.dll"])   
          try:
-            self.machine1 = Machine(driver=driver30i, ip="192.168.0.2", name="316")
+            self.machine1 = Machine(driver=driver30i, ip="192.168.0.1", name="316")
             self._client_connect()
             self.client.loop_start()
             while self.running:
