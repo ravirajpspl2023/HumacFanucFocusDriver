@@ -71,11 +71,12 @@ class AdvanceDriver:
             self._client_connect()
             self.client.loop_start()
             while self.running:
-                data = self.machine1.get_tool_info()
+                # data = self.machine1.get_tool_info()
+                data = self.machine1.createDatum()
                 logging.info(f"Machine connected successfully: {data}")
-                if data.get("state",{}).get("data",{}).get("group","") != self.previous_tool_group:
-                    self.previous_tool_group = data.get("state",{}).get("data",{}).get("group","")
-                    self.publish_data(data)
+                # if data.get("state",{}).get("data",{}).get("group","") != self.previous_tool_group:
+                #     self.previous_tool_group = data.get("state",{}).get("data",{}).get("group","")
+                #     self.publish_data(data)
                 time.sleep(0.5)
          except Exceptions.FocasConnectionException as e:
             logging.error(f"Failed to create Machine: {e}")
