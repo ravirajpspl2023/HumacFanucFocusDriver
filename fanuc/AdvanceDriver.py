@@ -19,16 +19,7 @@ class AdvanceDriver:
         self.port = 1883
         self.telemetry_topic = "pspl-iot/telemetry_cnc"
         self.previous_tool_group = None
-        # try:
-        #     self.fwlib = cdll.LoadLibrary(self.lib_path)
-        #     logging.info("Library loaded successfully")
-        # except Exception as e:
-        #     logging.error(f"Failed to load library: {e}")
-        # if not os.path.exists(self.lib_path):
-        #     logging.error(f"Library not found at {self.lib_path}")
-        # else:
-        #     logging.info(f"Loading library from {self.lib_path}")
-
+        
     def _client_connect(self):
         self.client = mqtt.Client(
             mqtt.CallbackAPIVersion.VERSION2,

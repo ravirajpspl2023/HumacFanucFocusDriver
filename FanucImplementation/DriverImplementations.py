@@ -1,6 +1,8 @@
 from ctypes import *
 import ctypes
-
+from functools import partial
+import multiprocessing as mp
+from typing import  Dict, Any
 from pyfocas.Driver import FocasDriverBase
 from pyfocas.Exceptions import FocasExceptionRaiser
 from .Fwlib32_h import *
@@ -156,7 +158,7 @@ class Fanuc30iDriver(FocasDriverBase):
         return data
 
     def getServoAndAxisLoads(self, handle):
-        {"time":time_ns() // 1_000_000}
+        data = {"time":time_ns() // 1_000_000}
         getServoLoadFunc = self.dll.cnc_rdspmeter
         getServoLoadFunc.restype = c_short
         num = c_short(MAX_AXIS)
@@ -175,10 +177,11 @@ class Fanuc30iDriver(FocasDriverBase):
         FocasExceptionRaiser(result, context=self)
         axloads = {s.load.name : spload(s) for s in axloads if s.load.name != "\x00"}
         loads.update(axloads)
-        data = {'loads': loads}
+        data['loads'] = loads 
         return data
 
     def getAlarmStatus(self, handle):
+        data = {"time": time_ns() // 1_000_000}
         getAlarmStatusFunc = self.dll.cnc_alarm
         getAlarmStatusFunc.restype = c_short
         alarm_data = AlarmStatus()
@@ -186,7 +189,6 @@ class Fanuc30iDriver(FocasDriverBase):
         FocasExceptionRaiser(result, context=self)
         alarm_data = alarm_data.data
         logging.info(f'this is alarm code : {alarm_data}')
-        data = {}
         data["alarm"] = alarmStringBuilder(alarm_data=alarm_data)
         return data
 
@@ -212,13 +214,7 @@ class Fanuc30iDriver(FocasDriverBase):
         Reads tool life data for the currently active tool.
         Returns tool number, group, used life, max life, and remaining.
         """
-        data = {"observation": {
-                "time": time_ns() // 1_000_000,
-                 "machine": "ed4200001",
-                 "name": "tool",
-                },
-                "state": {"data": {}}
-              }
+        data = {"time": time_ns() // 1_000_000}
         odb = ODBTG()
         length = ctypes.sizeof(ODBTG)
         
@@ -242,6 +238,19 @@ class Fanuc30iDriver(FocasDriverBase):
             data["state"]['data']["tool"] = t.tool_num
             # logging.info(f"  [{t.tuse_num}] T{t.tool_num} | L:{t.length_num} R:{t.radius_num} Info:{t.tinfo}")
         return data
+    
+    def _run_function(self, func):
+        """Helper function jo pickle ho sakta hai"""
+        return func()
+    
+    def process_poll(self,handle):
+        if handle is not None and self._poll_methods != []:
+            method_names = [m.__name__ for m in self._poll_methods]
+            partial_funcs = [partial(method, handle) for method in self._poll_methods]
+            with mp.Pool(processes=len(self._poll_methods)) as pool:
+                results = pool.map(self._run_function, partial_funcs)
+                
+            return dict(zip(method_names, results))
 
 def alarmStringBuilder(alarm_data):
     alarms = []
