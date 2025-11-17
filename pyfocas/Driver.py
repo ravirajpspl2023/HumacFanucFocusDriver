@@ -1,5 +1,3 @@
-import os
-import sys
 import ctypes
 from ctypes.util import find_library
 from abc import ABCMeta, abstractmethod

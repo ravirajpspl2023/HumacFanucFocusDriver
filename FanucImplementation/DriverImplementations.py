@@ -1,8 +1,6 @@
 from ctypes import *
 import ctypes
-from functools import partial
-import multiprocessing as mp
-from typing import  Dict, Any
+
 from pyfocas.Driver import FocasDriverBase
 from pyfocas.Exceptions import FocasExceptionRaiser
 from .Fwlib32_h import *
@@ -14,17 +12,7 @@ AUTO_LABELS = ["MDI", "AUTO", "AUTO", "EDIT", "AUTO", "MANUAL", "MANUAL"]
 RUN_LABELS = ["STOPPED", "READY (WAITING)", "FEED HOLD", "ACTIVE", "ACTIVE"]
 
 gBlockString = ""
-_worker_handle   = None
-_worker_instance = None
 
-def _pool_initializer(handle_val: int, driver_instance):
-    global _worker_handle, _worker_instance
-    _worker_handle   = handle_val
-    _worker_instance = driver_instance
-
-def _worker_run_method(method_name: str):
-    method = getattr(_worker_instance, method_name)
-    return method(_worker_handle)
 
 class Fanuc30iDriver(FocasDriverBase):
     ip = ""
@@ -187,7 +175,7 @@ class Fanuc30iDriver(FocasDriverBase):
         FocasExceptionRaiser(result, context=self)
         axloads = {s.load.name : spload(s) for s in axloads if s.load.name != "\x00"}
         loads.update(axloads)
-        data['loads'] = loads 
+        data['loads']= loads 
         return data
 
     def getAlarmStatus(self, handle):
@@ -248,26 +236,6 @@ class Fanuc30iDriver(FocasDriverBase):
             data["state"]['data']["tool"] = t.tool_num
             # logging.info(f"  [{t.tuse_num}] T{t.tool_num} | L:{t.length_num} R:{t.radius_num} Info:{t.tinfo}")
         return data
-    
-    def _run_function(self, func):
-
-        return func()
-    
-    def process_poll(self, handle: int) -> Dict[str, Any]:
-        if handle is None or not self._poll_methods:
-            return {}
-
-        method_names = [m.__name__ for m in self._poll_methods]
-
-        ctx = mp.get_context('spawn')
-        with ctx.Pool(
-                processes=len(self._poll_methods),
-                initializer=_pool_initializer,
-                initargs=(handle, self)
-        ) as pool:
-            results = pool.map(_worker_run_method, method_names)
-
-        return dict(zip(method_names, results))
 
 def alarmStringBuilder(alarm_data):
     alarms = []
