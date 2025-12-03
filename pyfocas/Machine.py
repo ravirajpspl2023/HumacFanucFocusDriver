@@ -24,7 +24,7 @@ class Machine(object):
             time.sleep(2)
             self.connecte()
     def createDatum(self):
-        data = self.driver.process_poll(self.handle)
+        data = self.driver.poll(self.handle)
         data["machineName"] = self.name
         return data
 

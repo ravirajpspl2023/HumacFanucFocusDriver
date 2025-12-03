@@ -9,7 +9,6 @@ from pyfocas import Exceptions
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def main():
-    logging.info("Hello, World!")
     lib_path = "./lib/libfwlib32-linux-armv7.so.1.0.5"
     advancDriver = AdvanceDriver(lib_path)
     advancDriver.connecte()
